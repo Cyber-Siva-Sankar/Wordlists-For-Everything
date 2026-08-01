@@ -59,22 +59,6 @@ For anything with the payload in the request body or a header, Burp Intruder is 
 3. Rate-limit scans against anything production-like (`ffuf -p 0.1 -t 5`) to avoid unintentional denial of service.
 4. Each `.txt` file has a `NOTES` section at the bottom with class-specific guidance (e.g. which DBMS syntax to try first for SQLi, how to interpret SSTI probe responses).
 
-## Legal / disclaimer
-
-These wordlists are provided for educational purposes and authorized security testing (bug bounty programs, penetration tests with signed scope agreements, CTFs, and personal lab environments) only.
-
-Running these payloads against systems you do not own or do not have explicit written authorization to test is illegal in most jurisdictions and may violate laws such as the U.S. Computer Fraud and Abuse Act (CFAA), the UK Computer Misuse Act, or equivalent legislation elsewhere. The author(s) of this repository accept no liability for misuse.
-
-## Contributing
-
-PRs adding new payload categories, fixing false-positive-prone entries, or improving match-condition documentation are welcome. Please keep additions organized under the existing `SECTION` headers within each file and update this README's table if adding a new file.
-
-## License
-
-<!-- Choose one, e.g.: -->
-MIT — see `LICENSE` for details.
-
-
 # CMS / Server Fingerprinting Wordlists
 
 Separate path lists for identifying and enumerating common platforms during
@@ -121,4 +105,17 @@ payloads. Only run these against systems you own or have explicit written
 authorization to test; unauthorized scanning can be illegal in many
 jurisdictions.
 
+## Legal / disclaimer
 
+These wordlists are provided for educational purposes and authorized security testing (bug bounty programs, penetration tests with signed scope agreements, CTFs, and personal lab environments) only.
+
+Running these payloads against systems you do not own or do not have explicit written authorization to test is illegal in most jurisdictions and may violate laws such as the U.S. Computer Fraud and Abuse Act (CFAA), the UK Computer Misuse Act, or equivalent legislation elsewhere. The author(s) of this repository accept no liability for misuse.
+
+## Contributing
+
+PRs adding new payload categories, fixing false-positive-prone entries, or improving match-condition documentation are welcome. Please keep additions organized under the existing `SECTION` headers within each file and update this README's table if adding a new file.
+
+## License
+
+<!-- Choose one, e.g.: -->
+MIT — see `LICENSE` for details.
