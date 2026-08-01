@@ -1,5 +1,7 @@
 # Web App Fuzzing Wordlists
 
+Created by @Cyber_Siva
+
 A collection of hand-built wordlists for fuzzing common web application vulnerability classes with tools like `ffuf`, `wfuzz`, or Burp Intruder. Companion HTML manual included with usage steps and worked examples.
 
 > ⚠️ **For authorized security testing only.** Every payload in this repo is meant for environments you own or have explicit written permission to test — a bug bounty scope, a pentest engagement, a CTF, or your own lab. Do not use these against systems without authorization. See [Legal](#legal--disclaimer) below.
