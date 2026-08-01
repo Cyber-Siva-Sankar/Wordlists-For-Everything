@@ -1,0 +1,65 @@
+# ============================================================
+# CORS Misconfiguration Test Origins Wordlist
+# Usage: send each as the Origin: header value on a request to the
+#        target API, check if it's reflected in Access-Control-Allow-Origin
+#        (especially combined with Access-Control-Allow-Credentials:true)
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Attacker-controlled domain baseline
+# ---------------------------------------
+https://evil.com
+http://evil.com
+null
+
+# ---------------------------------------
+# SECTION 2: Subdomain / prefix confusion
+# (replace "example.com" with actual target domain)
+# ---------------------------------------
+https://evil.example.com
+https://example.com.evil.com
+https://example.com-evil.com
+https://exampleXcom
+https://example.com.evil.com/
+https://evilexample.com
+https://example.com.br
+https://notexample.com
+
+# ---------------------------------------
+# SECTION 3: Protocol / port confusion
+# ---------------------------------------
+http://example.com
+https://example.com:1337
+https://example.com:443.evil.com
+https://example.com%2eevil.com
+
+# ---------------------------------------
+# SECTION 4: Special origin values
+# ---------------------------------------
+null
+file://
+https://localhost
+http://localhost
+http://127.0.0.1
+
+# ---------------------------------------
+# SECTION 5: Regex bypass (if server uses naive regex matching)
+# ---------------------------------------
+https://example.com.evil.com
+https://evilexample.com
+https://example.comevil.com
+https://xexample.com
+https://example.com%60.evil.com
+https://example%00.com
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - The vulnerability exists when a non-legitimate Origin gets
+#   reflected back in Access-Control-Allow-Origin AND
+#   Access-Control-Allow-Credentials is true — that combination lets
+#   an attacker-hosted page read authenticated responses cross-origin.
+# - Replace "example.com" throughout with the actual target domain
+#   before testing.
+# - Only use against systems you are explicitly authorized to test.

