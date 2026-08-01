@@ -1,6 +1,6 @@
 # Web App Fuzzing Wordlists
 
-Created by @Cyber_Siva
+Created by **Cyber_Siva**
 
 A collection of hand-built wordlists for fuzzing common web application vulnerability classes with tools like `ffuf`, `wfuzz`, or Burp Intruder. Companion HTML manual included with usage steps and worked examples.
 
