@@ -164,8 +164,59 @@ better in practice.
 
 Only use these against systems you own or are explicitly authorized to test.
 
+# Subdomains / Directories / Parameters Wordlists
 
-## Note
+| File | Count | Purpose |
+|---|---|---|
+| wordlist_subdomains_5k.txt | 5,000 | Fast subdomain enum (SecLists top-1M, top 5k) |
+| wordlist_subdomains_20k.txt | 20,000 | Deeper subdomain enum (SecLists top-1M, top 20k) |
+| wordlist_directories_raft_medium.txt | 29,999 | Directory/path brute-forcing (SecLists RAFT medium) |
+| wordlist_parameters_burp.txt | 6,453 | GET/POST parameter names, Burp Suite's curated list |
+| wordlist_parameters_combined.txt | 6,463 | Burp list + hand-added common param names (id, redirect_url, callback, token, path, cmd, etc.) — good for IDOR/SSRF/open-redirect/LFI param mining |
+| wordlist_api_endpoints.txt | 295 | Common REST/API path segments (v1, users, auth, graphql, etc.) |
+
+## Usage examples
+
+**Subdomain enumeration**
+```
+# ffuf (DNS mode via subfinder/httpx is usually better, but ffuf can do vhost fuzzing)
+ffuf -u https://FUZZ.target.com/ -w wordlist_subdomains_20k.txt -mc 200,301,302,403
+
+# amass / puredns / massdns all accept plain wordlists like this too
+puredns bruteforce wordlist_subdomains_20k.txt target.com
+```
+
+**Directory/path discovery**
+```
+ffuf -u https://target.com/FUZZ -w wordlist_directories_raft_medium.txt -mc 200,301,302,403
+gobuster dir -u https://target.com -w wordlist_directories_raft_medium.txt
+```
+Combine with the extension-specific lists from the previous set for a full
+directory + extension sweep, e.g.:
+```
+ffuf -u https://target.com/FUZZ -w wordlist_php.txt
+```
+
+**Parameter discovery (hidden GET/POST params)**
+```
+# ffuf against a known parameter position
+ffuf -u "https://target.com/page.php?FUZZ=test" -w wordlist_parameters_combined.txt -mc 200 -fs <baseline_size>
+
+# arjun (dedicated param-mining tool) also accepts these directly
+arjun -u https://target.com/page.php -w wordlist_parameters_combined.txt
+```
+
+## Note 1
+- Subdomain and parameter lists are sourced from SecLists (Daniel Miessler),
+  the de facto standard in the security community — battle-tested against
+  real-world targets rather than hand-guessed.
+- `wordlist_parameters_combined.txt` is the one to reach for first if you're
+  hunting for IDOR, open redirect, SSRF, or LFI via unlinked parameters.
+- Pair `wordlist_directories_raft_medium.txt` with the file-extension lists
+  (from the earlier set) for combined dir + file discovery.
+- Only use against systems you own or are explicitly authorized to test.
+
+## Note 2
 These lists point at *known, publicly documented* paths (the kind already
 indexed by tools like SecLists, gobuster's built-in wordlists, and each
 platform's own file layout) — they don't include exploit code or attack
